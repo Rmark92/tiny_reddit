@@ -5,6 +5,7 @@ require 'pry'
 require 'pstore'
 require 'fileutils'
 require 'bcrypt'
+require 'aws-sdk'
 require_relative 'submission'
 require_relative 'user'
 
@@ -16,6 +17,15 @@ SECONDS_PER_YEAR = 365 * SECONDS_PER_MONTH
 TIME_MEASURES_IN_SECONDS = {"seconds" => 1, "minutes" => SECONDS_PER_MINUTE,
                             "hours" => SECONDS_PER_HOUR, "days" => SECONDS_PER_DAY,
                             "months" => SECONDS_PER_MONTH, "years" => SECONDS_PER_YEAR }
+
+# Aws::S3::Base.establish_connection!(
+#  :access_key_id   => ENV['AWS_ACCESS_KEY_ID'],
+#  :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
+# )
+# s3 = Aws::S3::Client.new
+
+# Aws::S3::Base.set_current_bucket_to 'miniredditapp'
+binding.pry
 
 configure do
   enable :sessions
@@ -37,21 +47,32 @@ set(:auth) do |_|
 end
 
 def load_posts
+  s3_submissions = Aws::S3::S3Object.value('submissions_pstore.txt', bucket = 'miniredditapp')
+  File.open("#{File.dirname(__FILE__)}/data/submissions.pstore", "w+") do |file|
+    file.write(s3_submissions)
+  end
+  binding.pry
   @submission_store = PStore.new("#{File.dirname(__FILE__)}/data/submissions.pstore")
   @posts = @submission_store.transaction { @submission_store[:posts] } || []
 end
 
 def update_posts
   @submission_store.transaction { @submission_store[:posts] = @posts }
+  Aws::S3::S3Object.store('submissions_pstore.txt', File.read("#{File.dirname(__FILE__)}/data/submissions.pstore"), 'miniredditapp')
 end
 
 def load_users
+  s3_users = Aws::S3::S3Object.value('users_pstore.txt', bucket = 'miniredditapp')
+  File.open("#{File.dirname(__FILE__)}/data/users.pstore", "w+") do |file|
+    file.write(s3_users)
+  end
   @users_store = PStore.new("#{File.dirname(__FILE__)}/data/users.pstore")
   @users = @users_store.transaction { @users_store[:users] } || []
 end
 
 def update_users
   @users_store.transaction { @users_store[:users] = @users }
+  Aws::S3::S3Object.store('users_pstore.txt', File.read("#{File.dirname(__FILE__)}/data/users.pstore"), 'miniredditapp')
 end
 
 helpers do

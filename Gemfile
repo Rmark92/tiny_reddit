@@ -8,7 +8,7 @@ gem "erubis"
 gem "minitest"
 gem "pry"
 gem "bcrypt"
-gem "aws-sdk"
+gem "aws-sdk", '~> 2.0'
 
 group :production do
   gem "puma"
