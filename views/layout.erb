@@ -1,0 +1,42 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <link rel="stylesheet" href="/stylesheets/application.css">
+  <script src="/javascripts/jquery-3.2.0.js"></script>
+  <script src="/javascripts/application.js"></script>
+  <title>Mini Reddit</title>
+</head>
+<body>
+  <div class="head">
+    <a href="/" class="home">
+      <img src="/images/snoo_colored.png" alt="snoo">
+      <h1>Tiny Reddit</h1>
+    </a>
+    <% if session[:user_name] %>
+      <div class="user_account_info">
+        <p><em>Signed in as </em><strong><%= session[:user_name] %></strong></p>
+        <form action="/signout" method="post">
+          <button type="submit">Sign Out</button>
+        </form>
+      </div>
+    <% else %>
+      <div class="signin_link">
+        <p><a href="/signin">Sign in</a></p>
+        <p><a href="/register">Register</a></p>
+      </div>
+    <% end %>
+  </div>
+  <div class="message">
+    <% if session[:success] %>
+      <p class="success"><%= session[:success] %></p>
+      <% session.delete(:success) %>
+    <% elsif session[:error] %>
+      <p class="error"><%= session[:error] %></p>
+      <% session.delete(:error) %>
+    <% end %>
+  </div>
+  <a href="/submit_post" class="post_submit_link">New Post!</a>
+  <div class="all_contents"><%== yield %></div>
+</body>
+</html>

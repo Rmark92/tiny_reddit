@@ -1,0 +1,385 @@
+body {
+  font-family: sans-serif;
+  background-color: hsla(0, 0%, 62%, 0.29);
+}
+
+div.inline > * {
+  display: inline;
+}
+
+div.head {
+  height: 100px;
+  width: 99.75%;
+  margin: auto 0;
+  background-color: #6ec9e7;
+  border-radius: 5px;
+}
+
+div.head > a.home {
+  color: black;
+  text-decoration: none;
+}
+
+div.head > a:hover.home {
+  color: rgba(0, 0, 0, 0.55);
+  text-decoration: none;
+}
+
+div.head > a > h1 {
+  position:relative;
+  font-size: 50px;
+  left: 35%;
+  bottom:100px;
+}
+
+div.head > a > img {
+  position: relative;
+  top: 10px;
+  width: 10%;
+  height: 80%;
+}
+
+div.signin_link {
+  height: 80px;
+  width: 13%;
+  background-color: #FFFF66;
+  position: fixed;
+  top: 20px;
+  left: 80%;
+  border-radius: 10px;
+  text-align: center;
+  z-index:4000;
+}
+
+div.signin_form {
+  position: relative;
+  bottom: 50px;
+  left: 20px;
+}
+
+div.signin_form > form > div.buttons {
+  position: relative;
+  top: 15px;
+}
+
+div.register_form {
+  position: relative;
+  bottom: 50px;
+  left: 20px;
+}
+
+div.register_form > form > div.buttons {
+  position: relative;
+  top: 15px;
+}
+
+a.post_submit_link {
+  position: relative;
+  left: 81.5%;
+  font-size: 30px;
+  top: 10px;
+  z-index: 1000;
+  text-decoration: none;
+  font-weight: bold;
+}
+
+div.user_account_info {
+  position: relative;
+  height: 55%;
+  width: 25%;
+  left: 74.5%;
+  bottom:190px;
+  border-radius: 10px;
+  background-color: rgba(95, 195, 99, 0.62);
+  text-align: center;
+}
+
+div.user_account_info > p {
+  position: relative;
+  top: 5px;
+}
+
+div.user_account_info > form {
+  position: relative;
+  z-index:4000;
+  bottom: 5px
+}
+
+.message {
+  position: fixed;
+  margin: 0 auto;
+  top: 5px;
+  left: 25%;
+  width: 40%;
+  text-align: center;
+  z-index: 3000;
+  display: inline;
+}
+
+.message > .error {
+  background-color: #de6873;
+  padding: 10px 0;
+  border-radius: 10px;
+}
+
+.message > .success {
+  background-color: #5fc363;
+  padding: 10px 0;
+  border-radius: 10px;
+}
+
+.message > .ajax.error {
+  background-color: #de6873;
+  padding: 10px 0;
+  border-radius: 10px;
+}
+
+.all_contents {
+  position:relative;
+  top: 20px;
+}
+
+.upvote.selected {
+  position: relative;
+  top: 15px;
+  right: 6px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid hsla(39, 100%, 50%, 0.65);
+}
+
+.downvote.selected {
+  position: relative;
+  top: 45px;
+  right: 6px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid rgba(0, 0, 255, 0.62);
+}
+
+.upvote.unselected {
+  position: relative;
+  top: 15px;
+  right: 6px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-bottom: 10px solid gray;
+}
+
+.downvote.unselected {
+  position: relative;
+  top: 45px;
+  right: 6px;
+  width: 0;
+  height: 0;
+  border-left: 10px solid transparent;
+  border-right: 10px solid transparent;
+  border-top: 10px solid gray;
+}
+
+input.short {
+  position: relative;
+  bottom: 7px;
+  height: 25px;
+  width: 400px;
+  border-radius: 5px;
+}
+
+div.all_post_contents {
+  position: relative;
+  bottom: 35px;
+}
+
+div.short_form {
+  position: relative;
+  background-color: rgba(95, 195, 99, 0.62);
+  left: 20px;
+  bottom: 60px;
+  height: 300px;
+  width: 40%;
+  border-radius: 5px;
+}
+
+div.short_form > h2 {
+  position: relative;
+  text-align: center;
+  top: 20px;
+}
+
+div.short_form > form {
+  position: relative;
+  left: 28px;
+  top: 20px;
+}
+
+div.short_form > form > div.buttons {
+  position: relative;
+  top: 22px;
+}
+
+div.short_form > form > div.buttons > a.cancel {
+  position: relative;
+  left: 20px;
+}
+
+div.post.deleted {
+  height: 80px;
+}
+
+div.post.deleted > p.deleted_text {
+  position: relative;
+  left: 35px;
+  top: 15px;
+}
+
+div.post.deleted > a.comment_link_deleted {
+  position: relative;
+  left: 45px;
+  top: 10px;
+}
+
+
+div.post {
+  background-color: white;
+  position: relative;
+  top: 20px;
+  margin: 20px 0;
+  height: 10%;
+  width: 95%;
+  border-radius: 5px;
+}
+
+div.post > .vote_form {
+  position: relative;
+  left: 16px;
+}
+div.post > .score {
+  position: relative;
+  width: 3%;
+  top: 50px;
+  left: 2px;
+  text-align: center;
+}
+
+div.post > .content {
+  position:relative;
+  bottom:20px;
+  left:45px;
+}
+
+div.post > .content > a.title {
+  font-size: 20px;
+}
+
+div.post > .content > .details {
+  display: inline;
+  font-size: 15px;
+}
+
+div.post > .content > a.comment_link {
+  font-size: 15px;
+}
+
+div.comment_contents {
+  position: relative;
+  bottom: 50px;
+}
+
+div.comment_head {
+  position: relative;
+  left: 10px;
+}
+
+div.comment_head > form > button.comment_submit {
+  position: relative;
+  right: 615px;
+  top:25px;
+}
+
+div.comment_head > h3 {
+  position: relative;
+  top: 20px;
+}
+
+div.comment {
+  background-color: white;
+  position: relative;
+  top: 20px;
+  margin: 20px 0;
+  height: 10%;
+  width: 100%;
+  border-radius: 5px;
+}
+
+div.comment.deleted {
+  height: 50px;
+}
+
+div.comment.deleted > p.deleted_text {
+  position: relative;
+  left: 20px;
+  top: 15px;
+}
+
+div.comment_details {
+  position: relative;
+  left: 40px;
+}
+
+div.comment_details > .content {
+  width: 90%;
+  word-wrap: break-word;
+  word-break: break-all;
+  position: relative;
+  bottom: 25px;
+  left: 20px;
+}
+
+div.comment_details > a {
+  position: relative;
+  left: 10px;
+  bottom: 10px;
+}
+
+div.comment_details > form > button.delete_comment {
+  position: relative;
+  left: 60px;
+  bottom: 27px;
+}
+
+div.comment_details > .user {
+  position: relative;
+  left: 10px;
+  bottom: 25px;
+}
+
+div.comment > .score {
+  position: relative;
+  width: 3%;
+  text-align: center;
+  top: 52px;
+  left: 11px;
+}
+
+div.comment > .vote_form {
+  position: relative;
+  left: 25px;
+  top: 2px;
+}
+
+div.comment_reply {
+  position: relative;
+  bottom: 40px;
+  left: 20px;
+}
+
+div.comment_reply > form > .buttons {
+  position: relative;
+  top: 15px;
+}

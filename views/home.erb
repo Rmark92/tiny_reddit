@@ -1,0 +1,52 @@
+<div class="all_post_contents">
+  <% sort_posts.each do |post| %>
+    <% if post.deleted? %>
+      <div class="post deleted">
+        <p class="deleted_text"><strong>[ Deleted ]</strong></p>
+        <a class="comment_link_deleted" href="/<%= post.id %>/comments"><%= "Comments(#{post.num_replies})" %></a>
+      </div>
+    <% else %>
+      <div class="post">
+        <div class="score"><%= post.score %></div>
+        <div class="vote_form">
+          <div class="upvote <%= upvote_status(post) %>">
+            <% if upvote_status(post) == "selected" %>
+              <form method="post" action="/<%= post.id %>/vote">
+                <input type="hidden" name="choice" value="remove">
+              </form>
+            <% elsif upvote_status(post) == "unselected" %>
+              <form method="post" action="/<%= post.id %>/vote">
+                <input type="hidden" name="choice" value="upvote">
+              </form>
+            <% end %>
+          </div>
+          <div class="downvote <%= downvote_status(post) %>">
+            <% if downvote_status(post) == "selected" %>
+              <form method="post" action="/<%= post.id %>/vote">
+                <input type="hidden" name="choice" value="remove">
+              </form>
+            <% elsif downvote_status(post) == "unselected" %>
+              <form method="post" action="/<%= post.id %>/vote">
+                <input type="hidden" name="choice" value="downvote">
+              </form>
+            <% end %>
+          </div>
+        </div>
+        <div class="content">
+          <a class="title" href="<%= post.link %>"><%= post.title %></a>
+          <div class="details">
+            <p><%= "Submitted by #{post.user_name} #{calculate_time_passed(post.timestamp)}" %></p>
+          </div>
+          <div class="inline">
+            <a class="comment_link" href="<%= "#{post.id}/comments"%>"><%= "Comments(#{post.num_replies})" %></a>
+            <% if session[:user_name] == post.user_name %>
+              <form class="delete_post" method="post" action="/<%= post.id %>/delete">
+                <button type="submit">Delete</button>
+              </form>
+            <% end %>
+          </div>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>

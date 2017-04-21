@@ -1,0 +1,66 @@
+<div class="comment_contents">
+  <div class="comment_head">
+    <% if @post.deleted? %>
+      <h2 class="deleted_post">[ Deleted ]</h2>
+    <% else %>
+      <h2><a href="<%= @post.link %>"><%= @post.title %></a></h2>
+      <p><%= "Submitted by #{@post.user_name} #{calculate_time_passed(@post.timestamp)}" %></p>
+    <% end %>
+    <h4>Add a new comment: </h4>
+    <form action="/<%= @post.id %>/comments" method="post">
+      <textarea rows="5" cols="100" name="text"></textarea>
+      <button type="submit" class="comment_submit">Submit</button>
+    </form>
+    <h3>Comments</h3>
+  </div>
+  <% list_comments(@comments) do |comment, indent| %>
+    <% if comment.deleted? %>
+      <div class="comment deleted" style="position:relative;left:<%= "#{indent}px" %>;">
+        <p class="deleted_text"><strong>[ Deleted ]</strong></p>
+      </div>
+    <% else %>
+      <div class="comment" style="position:relative;left:<%= "#{indent}px" %>;">
+        <div class="score"><%= comment.score %></div>
+        <div class="vote_form">
+          <div class="upvote <%= upvote_status(comment) %>">
+            <% if upvote_status(comment) == "selected" %>
+              <form method="post" action="/<%= @post.id %>/<%= comment.id %>/vote">
+                <input type="hidden" name="choice" value="remove">
+              </form>
+            <% elsif upvote_status(comment) == "unselected" %>
+              <form method="post" action="/<%= @post.id %>/<%= comment.id %>/vote">
+                <input type="hidden" name="choice" value="upvote">
+              </form>
+            <% end %>
+          </div>
+          <div class="downvote <%= downvote_status(comment) %>">
+            <% if downvote_status(comment) == "selected" %>
+              <form method="post" action="/<%= @post.id %>/<%= comment.id %>/vote">
+                <input type="hidden" name="choice" value="remove">
+              </form>
+            <% elsif downvote_status(comment) == "unselected" %>
+              <form method="post" action="/<%= @post.id %>/<%= comment.id %>/vote">
+                <input type="hidden" name="choice" value="downvote">
+              </form>
+            <% end %>
+          </div>
+        </div>
+        <div class="comment_details">
+          <div class="user inline">
+            <strong><%= comment.user_name %> </strong>
+            <small><em><%= calculate_time_passed(comment.timestamp) %></em></small>
+          </div>
+          <div class="content">
+            <p><%= comment.text %></p>
+          </div>
+          <a href="<%= "/#{@post.id}/comments/#{comment.id}/reply" %>"><small>Reply</small></a>
+            <% if session[:user_name] == comment.user_name %>
+              <form action="<%= "/#{@post.id}/comments/#{comment.id}/delete" %>" method="post">
+                <button class="delete_comment" type="submit">Delete</button>
+              </form>
+            <% end %>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
