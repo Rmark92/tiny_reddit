@@ -18,15 +18,6 @@ TIME_MEASURES_IN_SECONDS = {"seconds" => 1, "minutes" => SECONDS_PER_MINUTE,
                             "hours" => SECONDS_PER_HOUR, "days" => SECONDS_PER_DAY,
                             "months" => SECONDS_PER_MONTH, "years" => SECONDS_PER_YEAR }
 
-# Aws::S3::Base.establish_connection!(
-#  :access_key_id   => ENV['AWS_ACCESS_KEY_ID'],
-#  :secret_access_key => ENV['AWS_SECRET_ACCESS_KEY']
-# )
-# s3 = Aws::S3::Client.new
-
-# Aws::S3::Base.set_current_bucket_to 'miniredditapp'
-binding.pry
-
 configure do
   enable :sessions
   set :session_secret, 'secret'
@@ -47,24 +38,28 @@ set(:auth) do |_|
 end
 
 def load_posts
-  s3_submissions = Aws::S3::S3Object.value('submissions_pstore.txt', bucket = 'miniredditapp')
+  s3_client = Aws::S3::Client.new(region: 'us-east-1')
   File.open("#{File.dirname(__FILE__)}/data/submissions.pstore", "w+") do |file|
-    file.write(s3_submissions)
+    s3_client.get_object({ bucket:'miniredditapp', key:'submissions_pstore.txt'}, target: file)
   end
-  binding.pry
   @submission_store = PStore.new("#{File.dirname(__FILE__)}/data/submissions.pstore")
   @posts = @submission_store.transaction { @submission_store[:posts] } || []
 end
 
 def update_posts
   @submission_store.transaction { @submission_store[:posts] = @posts }
-  Aws::S3::S3Object.store('submissions_pstore.txt', File.read("#{File.dirname(__FILE__)}/data/submissions.pstore"), 'miniredditapp')
+  s3_client = Aws::S3::Client.new(region: 'us-east-1')
+  s3_client.put_object( {
+    bucket: 'miniredditapp',
+    body: File.read("#{File.dirname(__FILE__)}/data/submissions.pstore"),
+    key: 'submissions_pstore.txt'
+    })
 end
 
 def load_users
-  s3_users = Aws::S3::S3Object.value('users_pstore.txt', bucket = 'miniredditapp')
+  s3_client = Aws::S3::Client.new(region: 'us-east-1')
   File.open("#{File.dirname(__FILE__)}/data/users.pstore", "w+") do |file|
-    file.write(s3_users)
+    s3_client.get_object({ bucket:'miniredditapp', key:'users_pstore.txt'}, target: file)
   end
   @users_store = PStore.new("#{File.dirname(__FILE__)}/data/users.pstore")
   @users = @users_store.transaction { @users_store[:users] } || []
@@ -72,7 +67,12 @@ end
 
 def update_users
   @users_store.transaction { @users_store[:users] = @users }
-  Aws::S3::S3Object.store('users_pstore.txt', File.read("#{File.dirname(__FILE__)}/data/users.pstore"), 'miniredditapp')
+  s3_client = Aws::S3::Client.new(region: 'us-east-1')
+  s3_client.put_object( {
+    bucket: 'miniredditapp',
+    body: File.read("#{File.dirname(__FILE__)}/data/users.pstore"),
+    key: 'users_pstore.txt'
+    })
 end
 
 helpers do
