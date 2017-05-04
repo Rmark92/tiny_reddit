@@ -35,7 +35,7 @@
         <div class="content">
           <a class="title" href="<%= post.link %>"><%= post.title %></a>
           <div class="details">
-            <p><%= "Submitted by #{post.user_name} #{calculate_time_passed(post.timestamp)}" %></p>
+            <p><%= "Submitted by #{post.user_name} #{post.timestamp_str}" %></p>
           </div>
           <div class="inline">
             <a class="comment_link" href="<%= "#{post.id}/comments"%>"><%= "Comments(#{post.num_replies})" %></a>

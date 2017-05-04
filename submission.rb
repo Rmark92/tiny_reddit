@@ -1,3 +1,5 @@
+require_relative 'time_formatter'
+
 class Submission
   attr_reader :id, :user_name, :timestamp, :replies
 
@@ -24,12 +26,12 @@ class Submission
   end
 
   def upvote(user_name)
-    @upvotes << user_name
+    @upvotes << user_name unless @upvotes.include?(user_name)
     @downvotes.delete_if { |user_id| user_id == user_name }
   end
 
   def downvote(user_name)
-    @downvotes << user_name
+    @downvotes << user_name unless @downvotes.include?(user_name)
     @upvotes.delete_if { |user_id| user_id == user_name }
   end
 
@@ -54,6 +56,10 @@ class Submission
     @upvotes = :deleted
     @downvotes = :deleted
     @timestamp = :deleted
+  end
+
+  def timestamp_str
+    TimeFormatter.calculate_elapsed(@timestamp)
   end
 
   def deleted?

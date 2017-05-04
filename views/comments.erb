@@ -4,7 +4,7 @@
       <h2 class="deleted_post">[ Deleted ]</h2>
     <% else %>
       <h2><a href="<%= @post.link %>"><%= @post.title %></a></h2>
-      <p><%= "Submitted by #{@post.user_name} #{calculate_time_passed(@post.timestamp)}" %></p>
+      <p><%= "Submitted by #{@post.user_name} #{@post.timestamp_str}" %></p>
     <% end %>
     <h4>Add a new comment: </h4>
     <form action="/<%= @post.id %>/comments" method="post">
@@ -48,7 +48,7 @@
         <div class="comment_details">
           <div class="user inline">
             <strong><%= comment.user_name %> </strong>
-            <small><em><%= calculate_time_passed(comment.timestamp) %></em></small>
+            <small><em><%= comment.timestamp_str %></em></small>
           </div>
           <div class="content">
             <p><%= comment.text %></p>

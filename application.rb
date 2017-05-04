@@ -9,18 +9,6 @@ require 'aws-sdk'
 require_relative 'submission'
 require_relative 'user'
 
-SECONDS_PER_MINUTE = 60
-SECONDS_PER_HOUR = 60 * SECONDS_PER_MINUTE
-SECONDS_PER_DAY = 24 * SECONDS_PER_HOUR
-SECONDS_PER_MONTH = 31 * SECONDS_PER_DAY
-SECONDS_PER_YEAR = 365 * SECONDS_PER_MONTH
-TIME_MEASURES_IN_SECONDS = { 'seconds' => 1,
-                             'minutes' => SECONDS_PER_MINUTE,
-                             'hours' => SECONDS_PER_HOUR,
-                             'days' => SECONDS_PER_DAY,
-                             'months' => SECONDS_PER_MONTH,
-                             'years' => SECONDS_PER_YEAR }.freeze
-
 configure do
   enable :sessions
   set :session_secret, 'secret'
@@ -33,7 +21,7 @@ set(:auth) do |_|
       if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
         halt 401
       else
-        session[:error] = 'Must be signed in to perfom this action'
+        session[:error] = 'Must be signed in to perform this action'
         redirect env['HTTP_REFERER']
       end
     end
@@ -41,7 +29,7 @@ set(:auth) do |_|
 end
 
 def datastore_dir
-  if ENV["RACK_ENV"] == "production"
+  if ENV['RACK_ENV'] == 'production'
     "#{File.dirname(__FILE__)}/data"
   else
     "#{File.dirname(__FILE__)}/test/data"
@@ -51,7 +39,9 @@ end
 def load_from_s3(file_name)
   s3_client = Aws::S3::Client.new(region: 'us-east-1')
   File.open("#{datastore_dir}/#{file_name}.pstore", 'w+') do |file|
-    s3_client.get_object({ bucket: 'miniredditapp', key: "#{file_name}_pstore.txt" }, target: file)
+    s3_client.get_object({ bucket: 'miniredditapp',
+                           key: "#{file_name}_pstore.txt" },
+                         target: file)
   end
 end
 
@@ -62,27 +52,26 @@ def write_to_s3(file_name)
                        key: "#{filename}_pstore.txt")
 end
 
-
 def load_submissions
-  load_from_s3("submissions") if ENV["RACK_ENV"] == "production"
+  load_from_s3('submissions') if ENV['RACK_ENV'] == 'production'
   @submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
   @posts = @submission_store.transaction { @submission_store[:posts] } || []
 end
 
 def update_submissions
   @submission_store.transaction { @submission_store[:posts] = @posts }
-  write_to_s3("submissions") if ENV["RACK_ENV"] == "production"
+  write_to_s3('submissions') if ENV['RACK_ENV'] == 'production'
 end
 
 def load_users
-  load_from_s3("users") if ENV["RACK_ENV"] == "production"
+  load_from_s3('users') if ENV['RACK_ENV'] == 'production'
   @users_store = PStore.new("#{datastore_dir}/users.pstore")
   @users = @users_store.transaction { @users_store[:users] } || []
 end
 
 def update_users
   @users_store.transaction { @users_store[:users] = @users }
-  write_to_s3("users") if ENV["RACK_ENV"] == "production"
+  write_to_s3('users') if ENV['RACK_ENV'] == 'production'
 end
 
 helpers do
@@ -108,19 +97,6 @@ helpers do
   def downvote_status(submission)
     submission.downvoted?(session[:user_name]) ? 'selected' : 'unselected'
   end
-
-  def calculate_time_passed(time_submitted)
-    seconds_passed = (Time.now - time_submitted)
-    unit_to_use = 'seconds'
-    count = 1
-    TIME_MEASURES_IN_SECONDS.each do |unit, num_seconds|
-      break unless seconds_passed > num_seconds
-      unit_to_use = unit
-      count = seconds_passed.to_f / num_seconds
-    end
-    unit_to_use = unit_to_use[0...-1] if count.round <= 1
-    "#{count.round} #{unit_to_use} ago"
-  end
 end
 
 get '/' do
@@ -138,14 +114,14 @@ get '/register' do
 end
 
 def new_username_error(username)
-  if username.nil?
+  if username.nil? || username.empty?
     'Must enter something for your username'
   elsif username.strip.empty?
     'Username must include alphanumeric characters'
   elsif username.strip.size > 20
     'Username must be less than 20 characters long'
   elsif username =~ /[^\w\s]/
-    'Username can only include alphanumeric chacters and spaces'
+    'Username can only include alphanumeric characters and spaces'
   elsif @users.map(&:name).include?(username.strip)
     'Sorry, that username is already taken'
   end
@@ -279,7 +255,7 @@ post '/:post_id/delete' do
     update_submissions
     session[:success] = 'Post successfully deleted!'
   end
-  erb :home
+  redirect "/"
 end
 
 def comment_submission_error(comment_text)
