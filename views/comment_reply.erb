@@ -1,10 +1,23 @@
 <div class="comment_reply">
-  <h4>Reply:</h4>
-  <form action="/<%= @post.id %>/comments/<%= @comment_id %>/reply"  method="post">
-    <textarea rows="5" cols="100" name="text"></textarea>
-    <div class="buttons">
-      <button type="submit">Submit</button>
-      <a href="/<%= @post.id %>/comments">Cancel</a>
+  <div class="comment">
+    <div class="comment_details">
+      <div class="user inline">
+        <strong><%= @comment.user_name %> </strong>
+        <small><em><%= @comment.timestamp_str %></em></small>
+      </div>
+      <div class="content">
+        <p><%= @comment.text %></p>
+      </div>
     </div>
-  </form>
+  </div>
+  <div class="reply">
+    <h4>Reply:</h4>
+    <form action="/<%= @post.id %>/comments/<%= @comment.id %>/reply"  method="post">
+      <textarea rows="5" cols="100" name="text"></textarea>
+      <div class="buttons">
+        <button type="submit">Submit</button>
+        <a href="/<%= @post.id %>/comments">Cancel</a>
+      </div>
+    </form>
+  </div>
 </div>

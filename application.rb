@@ -52,39 +52,37 @@ def write_to_s3(file_name)
                        key: "#{filename}_pstore.txt")
 end
 
-def load_submissions
+def load_submissions_store
   load_from_s3('submissions') if ENV['RACK_ENV'] == 'production'
-  @submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
-  @posts = @submission_store.transaction { @submission_store[:posts] } || []
+  submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
+  submission_store.transaction { submission_store[:posts] } || []
 end
 
-def update_submissions
-  @submission_store.transaction { @submission_store[:posts] = @posts }
+def update_submissions_store(posts)
+  submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
+  submission_store.transaction { submission_store[:posts] = posts }
   write_to_s3('submissions') if ENV['RACK_ENV'] == 'production'
 end
 
-def load_users
+def load_users_store
   load_from_s3('users') if ENV['RACK_ENV'] == 'production'
-  @users_store = PStore.new("#{datastore_dir}/users.pstore")
-  @users = @users_store.transaction { @users_store[:users] } || []
+  users_store = PStore.new("#{datastore_dir}/users.pstore")
+  users_store.transaction { users_store[:users] } || []
 end
 
-def update_users
-  @users_store.transaction { @users_store[:users] = @users }
+def update_users_store(users)
+  users_store = PStore.new("#{datastore_dir}/users.pstore")
+  users_store.transaction { users_store[:users] = users }
   write_to_s3('users') if ENV['RACK_ENV'] == 'production'
 end
 
 helpers do
-  def sort_posts
-    @posts.sort_by(&:score).reverse
-  end
-
-  def sort_comments(comments)
-    comments.sort_by(&:score).reverse
+  def sort_submissions(submissions)
+    submissions.sort_by(&:score).reverse
   end
 
   def list_comments(comments, indent = 0, &block)
-    sort_comments(comments).each do |comment|
+    sort_submissions(comments).each do |comment|
       yield(comment, indent)
       list_comments(comment.replies, indent + 20, &block) if comment.replies
     end
@@ -100,20 +98,20 @@ helpers do
 end
 
 get '/' do
-  load_submissions
+  @posts = load_submissions_store
   erb :home
 end
 
 get '/submit_post', auth: true do
-  load_submissions
   erb :submit_post
 end
 
 get '/register' do
+  session[:original_referer] = env['HTTP_REFERER']
   erb :register
 end
 
-def new_username_error(username)
+def new_username_error(username, taken_usernames)
   if username.nil? || username.empty?
     'Must enter something for your username'
   elsif username.strip.empty?
@@ -122,7 +120,7 @@ def new_username_error(username)
     'Username must be less than 20 characters long'
   elsif username =~ /[^\w\s]/
     'Username can only include alphanumeric characters and spaces'
-  elsif @users.map(&:name).include?(username.strip)
+  elsif taken_usernames.include?(username.strip)
     'Sorry, that username is already taken'
   end
 end
@@ -138,31 +136,32 @@ end
 post '/register' do
   user_name = params[:user_id]
   password = params[:password]
-  load_users
+  users = load_users_store
+  taken_usernames = users.map(&:name)
 
-  error_message = new_username_error(user_name) ||
+  error_message = new_username_error(user_name, taken_usernames) ||
                   new_password_error(password)
-
   if error_message
     session[:error] = error_message
     erb :register
   else
     current_user = User.new(user_name.strip, password)
-    @users << current_user
-    update_users
+    users << current_user
+    update_users_store(users)
 
     session[:user_name] = current_user.name
     session[:success] = "Thanks for registering, #{session[:user_name]}"
-    redirect '/'
+    redirect session[:original_referer] || '/'
   end
 end
 
 get '/signin' do
+  session[:original_referer] = env["HTTP_REFERER"]
   erb :signin
 end
 
-def signin_attempt_error(username, password)
-  attempted_user = @users.detect { |user| user.name == username }
+def signin_attempt_error(username, password, users)
+  attempted_user = users.detect { |user| user.name == username }
 
   if attempted_user.nil?
     "Sorry, we don't recognize that username"
@@ -178,9 +177,9 @@ end
 post '/signin' do
   username = params[:user_id]
   password = params[:password]
-  load_users
+  users = load_users_store
 
-  signin_error_message = signin_attempt_error(username, password)
+  signin_error_message = signin_attempt_error(username, password, users)
 
   if signin_error_message
     session[:error] = signin_error_message
@@ -188,14 +187,14 @@ post '/signin' do
   else
     session[:user_name] = username
     session[:success] = "Welcome, #{session[:user_name]}"
-    redirect '/'
+    redirect session[:original_referer] || '/'
   end
 end
 
 post '/signout' do
   session.delete(:user_name)
   session[:success] = 'Successfully signed out'
-  redirect '/'
+  redirect env['HTTP_REFERER']
 end
 
 def post_submission_error(title, link)
@@ -218,11 +217,11 @@ post '/submit_post', auth: true do
     session[:error] = submission_error
     erb :submit_post
   else
-    load_submissions
-    used_ids = @posts.map(&:id)
+    posts = load_submissions_store
+    used_ids = posts.map(&:id)
     new_post = Post.new(title, link, session[:user_name], used_ids)
-    @posts << new_post
-    update_submissions
+    posts << new_post
+    update_submissions_store(posts)
     session[:success] = 'Post successfully submitted!'
     redirect '/'
   end
@@ -231,12 +230,12 @@ end
 def redirect_if_invalid_post(post)
   return unless post.nil?
   session[:error] = "Sorry, that post doesn't exist"
-  redirect '/'
+  redirect env['HTTP_REFERER']
 end
 
 get '/:post_id/comments' do
-  load_submissions
-  @post = @posts.detect { |post| post.id == params[:post_id] }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == params[:post_id] }
   redirect_if_invalid_post(@post)
 
   @comments = @post.replies
@@ -244,18 +243,18 @@ get '/:post_id/comments' do
 end
 
 post '/:post_id/delete' do
-  load_submissions
-  @post = @posts.detect { |post| post.id == params[:post_id] }
-  redirect_if_invalid_post(@post)
+  posts = load_submissions_store
+  post = posts.detect { |post| post.id == params[:post_id] }
+  redirect_if_invalid_post(post)
 
-  if session[:user_name] != @post.user_name
+  if session[:user_name] != post.user_name
     session[:error] = 'Posts can only be deleted by the user that submitted them'
   else
-    @post.switch_to_deleted
-    update_submissions
+    post.switch_to_deleted
+    update_submissions_store(posts)
     session[:success] = 'Post successfully deleted!'
   end
-  redirect "/"
+  redirect '/'
 end
 
 def comment_submission_error(comment_text)
@@ -266,9 +265,8 @@ end
 post '/:post_id/comments', auth: true do
   post_id = params[:post_id]
   comment_text = params[:text]
-
-  load_submissions
-  @post = @posts.detect { |post| post.id == post_id }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == post_id }
   redirect_if_invalid_post(@post)
 
   @comments = @post.replies
@@ -279,7 +277,7 @@ post '/:post_id/comments', auth: true do
     erb :comments
   else
     @post.add_reply(comment_text, session[:user_name])
-    update_submissions
+    update_submissions_store(posts)
     session[:success] = 'Comment successfully posted'
     redirect "/#{@post.id}/comments"
   end
@@ -288,20 +286,20 @@ end
 def redirect_if_invalid_comment(comment)
   return unless comment.nil?
   session[:error] = "Sorry, that comment doesn't exist"
-  redirect "/#{@post.id}/comments"
+  redirect env['HTTP_REFERER']
 end
 
 get '/:post_id/comments/:comment_id/reply', auth: true do
   post_id = params[:post_id]
 
-  load_submissions
-  @post = @posts.detect { |post| post.id == post_id }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == post_id }
   redirect_if_invalid_post(@post)
 
-  @comment_id = params[:comment_id]
+  comment_id = params[:comment_id]
 
-  comment = Comment.find(@post.replies, @comment_id)
-  redirect_if_invalid_comment(comment)
+  @comment = Comment.find(@post.replies, comment_id)
+  redirect_if_invalid_comment(@comment)
 
   erb :comment_reply
 end
@@ -311,8 +309,8 @@ post '/:post_id/comments/:comment_id/reply', auth: true do
   comment_id = params[:comment_id]
   comment_text = params[:text]
 
-  load_submissions
-  @post = @posts.detect { |post| post.id == post_id }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == post_id }
 
   redirect_if_invalid_post(@post)
 
@@ -326,7 +324,7 @@ post '/:post_id/comments/:comment_id/reply', auth: true do
     erb :comment_reply
   else
     parent_comment.add_reply(comment_text, session[:user_name])
-    update_submissions
+    update_submissions_store(posts)
     session[:success] = 'Reply successfully submitted!'
     redirect "/#{@post.id}/comments"
   end
@@ -335,8 +333,8 @@ end
 post '/:post_id/comments/:comment_id/delete', auth: true do
   post_id = params[:post_id]
   comment_id = params[:comment_id]
-  load_submissions
-  @post = @posts.detect { |post| post.id == post_id }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == post_id }
   redirect_if_invalid_post(@post)
 
   comment = Comment.find(@post.replies, comment_id)
@@ -347,15 +345,15 @@ post '/:post_id/comments/:comment_id/delete', auth: true do
     redirect "#{@post.id}/comments"
   else
     comment.switch_to_deleted
-    update_submissions
+    update_submissions_store(posts)
     session[:success] = 'Comment successfully deleted'
     redirect "/#{@post.id}/comments"
   end
 end
 
 post '/:post_id/vote', auth: true do
-  load_submissions
-  @post = @posts.detect { |post| post.id == params[:post_id] }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == params[:post_id] }
   redirect_if_invalid_post(@post)
   choice = params[:choice]
 
@@ -365,7 +363,7 @@ post '/:post_id/vote', auth: true do
   when 'remove' then @post.remove_vote(session[:user_name])
   end
 
-  update_submissions
+  update_submissions_store(posts)
 
   if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
     status 204
@@ -379,28 +377,24 @@ post '/:post_id/:comment_id/vote', auth: true do
   comment_id = params[:comment_id]
   choice = params[:choice]
 
-  load_submissions
-  @post = @posts.detect { |post| post.id == post_id }
+  posts = load_submissions_store
+  @post = posts.detect { |post| post.id == post_id }
   redirect_if_invalid_post(@post)
 
   comment = Comment.find(@post.replies, comment_id)
+  redirect_if_invalid_comment(comment)
 
-  if comment.nil?
-    session[:error] = "Sorry, that comment doesn't exist"
-    erb :comments
+  case choice
+  when 'upvote' then comment.upvote(session[:user_name])
+  when 'downvote' then comment.downvote(session[:user_name])
+  when 'remove' then comment.remove_vote(session[:user_name])
+  end
+
+  update_submissions_store(posts)
+
+  if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
+    status 204
   else
-    case choice
-    when 'upvote' then comment.upvote(session[:user_name])
-    when 'downvote' then comment.downvote(session[:user_name])
-    when 'remove' then comment.remove_vote(session[:user_name])
-    end
-
-    update_submissions
-
-    if env['HTTP_X_REQUESTED_WITH'] == 'XMLHttpRequest'
-      status 204
-    else
-      redirect "/#{@post.id}/comments"
-    end
+    redirect "/#{@post.id}/comments"
   end
 end

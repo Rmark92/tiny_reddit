@@ -40,11 +40,12 @@ div.head > a > img {
 }
 
 div.signin_link {
+  border:3px solid rgba(95, 195, 99, 0.62);
   height: 80px;
   width: 13%;
   background-color: #FFFF66;
   position: fixed;
-  top: 20px;
+  top: 15px;
   left: 80%;
   border-radius: 10px;
   text-align: center;
@@ -202,7 +203,7 @@ div.short_form {
   left: 20px;
   bottom: 60px;
   height: 300px;
-  width: 40%;
+  width: 500px;
   border-radius: 5px;
 }
 
@@ -244,7 +245,6 @@ div.post.deleted > a.comment_link_deleted {
   top: 10px;
 }
 
-
 div.post {
   background-color: white;
   position: relative;
@@ -261,9 +261,9 @@ div.post > .vote_form {
 }
 div.post > .score {
   position: relative;
-  width: 3%;
+  width: 50px;
   top: 50px;
-  left: 2px;
+  right: 5px;
   text-align: center;
 }
 
@@ -361,10 +361,10 @@ div.comment_details > .user {
 
 div.comment > .score {
   position: relative;
-  width: 3%;
+  width: 50px;
   text-align: center;
   top: 52px;
-  left: 11px;
+  left: 4px;
 }
 
 div.comment > .vote_form {
@@ -379,7 +379,36 @@ div.comment_reply {
   left: 20px;
 }
 
-div.comment_reply > form > .buttons {
+div.comment_reply > .comment {
+  background-color: white;
+  position: relative;
+  top: 30px;
+  margin: 20px 0;
+  width: 100%;
+  border-radius: 5px;
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+div.comment_reply > .comment > .comment_details {
+  position: relative;
+  top: 32px;
+  left: 10px;
+}
+
+div.comment_reply > .comment > .comment_details > .content {
+  word-wrap: break-word;
+  word-break: break-all;
+}
+
+
+div.comment_reply > .reply {
+  position: relative;
+  top: 25px;
+  left: 20px;
+}
+
+div.comment_reply > .reply > form > .buttons {
   position: relative;
   top: 15px;
 }

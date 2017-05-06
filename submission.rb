@@ -12,7 +12,7 @@ class Submission
   end
 
   def score
-    if self.deleted? then -10000
+    if deleted? then -10_000
     else @upvotes.size - @downvotes.size
     end
   end
@@ -89,7 +89,7 @@ class Comment < Submission
                           comment_id[id_slice_start...id_slice_end]
       elsif comment.id[id_slice_start...id_slice_end] ==
             comment_id[id_slice_start...id_slice_end]
-        comment_found = self.find(comment.replies, comment_id, depth + 1)
+        comment_found = find(comment.replies, comment_id, depth + 1)
       end
     end
 

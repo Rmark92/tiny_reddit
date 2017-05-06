@@ -1,5 +1,5 @@
 <div class="all_post_contents">
-  <% sort_posts.each do |post| %>
+  <% sort_submissions(@posts).each do |post| %>
     <% if post.deleted? %>
       <div class="post deleted">
         <p class="deleted_text"><strong>[ Deleted ]</strong></p>
