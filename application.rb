@@ -6,6 +6,7 @@ require 'pstore'
 require 'fileutils'
 require 'bcrypt'
 require 'aws-sdk'
+require 'fileutils'
 require_relative 'submission'
 require_relative 'user'
 
@@ -30,9 +31,9 @@ end
 
 def datastore_dir
   if ENV['RACK_ENV'] == 'production'
-    "#{File.dirname(__FILE__)}/data"
+    "#{File.dirname(__FILE__)}/data_tmp"
   else
-    "#{File.dirname(__FILE__)}/test/data"
+    "#{File.dirname(__FILE__)}/test/data_tmp"
   end
 end
 
@@ -93,6 +94,10 @@ helpers do
   def downvote_status(submission)
     submission.downvoted?(session[:user_name]) ? 'selected' : 'unselected'
   end
+end
+
+before do
+  FileUtils.mkdir_p(datastore_dir) unless File.exist?(datastore_dir)
 end
 
 get '/' do

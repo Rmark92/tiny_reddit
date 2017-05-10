@@ -2,7 +2,6 @@ ENV["RACK_ENV"] = "development"
 
 require 'minitest/autorun'
 require 'rack/test'
-require 'fileutils'
 
 require_relative '../application'
 
