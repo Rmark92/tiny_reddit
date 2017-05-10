@@ -22,7 +22,7 @@ set(:auth) do |_|
         halt 401
       else
         session[:error] = 'Must be signed in to perform this action'
-        redirect env['HTTP_REFERER']
+        redirect back
       end
     end
   end
@@ -54,25 +54,23 @@ end
 
 def load_submissions_store
   load_from_s3('submissions') if ENV['RACK_ENV'] == 'production'
-  submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
-  submission_store.transaction { submission_store[:posts] } || []
+  @submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
+  @submission_store.transaction { @submission_store[:posts] } || []
 end
 
 def update_submissions_store(posts)
-  submission_store = PStore.new("#{datastore_dir}/submissions.pstore")
-  submission_store.transaction { submission_store[:posts] = posts }
+  @submission_store.transaction { @submission_store[:posts] = posts }
   write_to_s3('submissions') if ENV['RACK_ENV'] == 'production'
 end
 
 def load_users_store
   load_from_s3('users') if ENV['RACK_ENV'] == 'production'
-  users_store = PStore.new("#{datastore_dir}/users.pstore")
-  users_store.transaction { users_store[:users] } || []
+  @users_store = PStore.new("#{datastore_dir}/users.pstore")
+  @users_store.transaction { @users_store[:users] } || []
 end
 
 def update_users_store(users)
-  users_store = PStore.new("#{datastore_dir}/users.pstore")
-  users_store.transaction { users_store[:users] = users }
+  @users_store.transaction { @users_store[:users] = users }
   write_to_s3('users') if ENV['RACK_ENV'] == 'production'
 end
 
@@ -107,7 +105,12 @@ get '/submit_post', auth: true do
 end
 
 get '/register' do
-  session[:original_referer] = env['HTTP_REFERER']
+  session[:original_referer] = if env['HTTP_REFERER'].nil? ||
+                                  env['HTTP_REFERER'].include?('signin')
+                                 '/'
+                               else
+                                 env['HTTP_REFERER']
+                               end
   erb :register
 end
 
@@ -156,21 +159,17 @@ post '/register' do
 end
 
 get '/signin' do
-  session[:original_referer] = env["HTTP_REFERER"]
+  session[:original_referer] = env['HTTP_REFERER'] || '/'
   erb :signin
 end
 
-def signin_attempt_error(username, password, users)
-  attempted_user = users.detect { |user| user.name == username }
-
+def signin_attempt_error(attempted_user, password)
   if attempted_user.nil?
     "Sorry, we don't recognize that username"
   elsif password.nil?
     'Must enter a password'
   elsif !attempted_user.correct_password?(password)
     'Invalid password.  Please try again'
-  else
-    nil
   end
 end
 
@@ -179,7 +178,8 @@ post '/signin' do
   password = params[:password]
   users = load_users_store
 
-  signin_error_message = signin_attempt_error(username, password, users)
+  attempted_user = users.detect { |user| user.name == username }
+  signin_error_message = signin_attempt_error(attempted_user, password)
 
   if signin_error_message
     session[:error] = signin_error_message
@@ -194,7 +194,7 @@ end
 post '/signout' do
   session.delete(:user_name)
   session[:success] = 'Successfully signed out'
-  redirect env['HTTP_REFERER']
+  redirect env['HTTP_REFERER'] || '/'
 end
 
 def post_submission_error(title, link)
@@ -230,7 +230,7 @@ end
 def redirect_if_invalid_post(post)
   return unless post.nil?
   session[:error] = "Sorry, that post doesn't exist"
-  redirect env['HTTP_REFERER']
+  redirect back
 end
 
 get '/:post_id/comments' do
@@ -242,15 +242,15 @@ get '/:post_id/comments' do
   erb :comments
 end
 
-post '/:post_id/delete' do
+post '/:post_id/delete', auth: true do
   posts = load_submissions_store
-  post = posts.detect { |post| post.id == params[:post_id] }
-  redirect_if_invalid_post(post)
+  post_to_delete = posts.detect { |post| post.id == params[:post_id] }
+  redirect_if_invalid_post(post_to_delete)
 
-  if session[:user_name] != post.user_name
+  if session[:user_name] != post_to_delete.user_name
     session[:error] = 'Posts can only be deleted by the user that submitted them'
   else
-    post.switch_to_deleted
+    post_to_delete.switch_to_deleted
     update_submissions_store(posts)
     session[:success] = 'Post successfully deleted!'
   end
@@ -286,7 +286,7 @@ end
 def redirect_if_invalid_comment(comment)
   return unless comment.nil?
   session[:error] = "Sorry, that comment doesn't exist"
-  redirect env['HTTP_REFERER']
+  redirect back
 end
 
 get '/:post_id/comments/:comment_id/reply', auth: true do
@@ -299,6 +299,7 @@ get '/:post_id/comments/:comment_id/reply', auth: true do
   comment_id = params[:comment_id]
 
   @comment = Comment.find(@post.replies, comment_id)
+
   redirect_if_invalid_comment(@comment)
 
   erb :comment_reply
