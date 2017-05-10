@@ -49,7 +49,7 @@ def write_to_s3(file_name)
   s3_client = Aws::S3::Client.new(region: 'us-east-1')
   s3_client.put_object(bucket: 'miniredditapp',
                        body: File.read("#{datastore_dir}/#{file_name}.pstore"),
-                       key: "#{filename}_pstore.txt")
+                       key: "#{file_name}_pstore.txt")
 end
 
 def load_submissions_store
