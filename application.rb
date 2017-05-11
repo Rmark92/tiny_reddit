@@ -1,7 +1,6 @@
 require 'sinatra'
 require 'sinatra/reloader'
 require 'tilt/erubis'
-require 'pry'
 require 'pstore'
 require 'fileutils'
 require 'bcrypt'
