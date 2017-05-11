@@ -1,10 +1,9 @@
 require 'bcrypt'
 
 class User
-  attr_reader :name, :posts
+  attr_reader :name
 
   def initialize(name, password)
-    @posts = []
     @name = name
     @hashed_password = BCrypt::Password.create(password)
   end
